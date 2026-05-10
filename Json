@@ -1,0 +1,6 @@
+{
+  "name": "poetry-reader",
+  "version": "1.0.0",
+  "description": "Poetry Reader App",
+  "main": "index.html"
+}
