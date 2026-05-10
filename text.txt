@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poetry Reader</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(22, 33, 62, 0.95);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #d4af37;
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #d4af37;
+            border-radius: 6px;
+            background: #0f3460;
+            color: #d4af37;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #d4af37;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #e8c547;
+        }
+        .poem-display {
+            background: rgba(15, 52, 96, 0.7);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 4px solid #d4af37;
+            margin: 20px 0;
+        }
+        .poem-title {
+            color: #d4af37;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        .poem-author {
+            color: #b8860b;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        .poem-text {
+            white-space: pre-wrap;
+            line-height: 1.8;
+            font-size: 17px;
+            color: #e0e0e0;
+        }
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 Poetry Reader</h1>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search by author or poem title...">
+            <button onclick="searchPoem()">Search</button>
+            <button onclick="getRandomPoem()">Random</button>
+        </div>
+        <div id="poemContainer"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://poetrydb.org';
+
+        async function searchPoem() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                document.getElementById('poemContainer').innerHTML = '<div class="error">Please enter a poem title or author name</div>';
+                return;
+            }
+
+            document.getElementById('poemContainer').innerHTML = '<div class="error">Loading...</div>';
+
+            try {
+                let response = await fetch(`${API_BASE}/title/${encodeURIComponent(query)}`);
+                let data = await response.json();
+
+                if (data.status === 404) {
+                    response = await fetch(`${API_BASE}/author/${encodeURIComponent(query)}`);
+                    data = await response.json();
+                }
+
+                if (data.status === 404) {
+                    document.getElementById('poemContainer').innerHTML = '<div class="error">No poems found. Try another search.</div>';
+                    return;
+                }
+
+                const poems = Array.isArray(data) ? data : [data];
+                displayPoem(poems[0]);
+            } catch (error) {
+                document.getElementById('poemContainer').innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+            }
+        }
+
+        async function getRandomPoem() {
+            document.getElementById('poemContainer').innerHTML = '<div class="error">Loading...</div>';
+            try {
+                const response = await fetch(`${API_BASE}/random`);
+                const data = await response.json();
+                displayPoem(data[0]);
+            } catch (error) {
+                document.getElementById('poemContainer').innerHTML = '<div class="error">Error: ' + error.message + '</div>';
+            }
+        }
+
+        function displayPoem(poem) {
+            const poemText = Array.isArray(poem.lines) ? poem.lines.join('\n') : poem.lines;
+            const html = `
+                <div class="poem-display">
+                    <div class="poem-title">${poem.title}</div>
+                    <div class="poem-author">by ${poem.author}</div>
+                    <div class="poem-text">${poemText}</div>
+                </div>
+            `;
+            document.getElementById('poemContainer').innerHTML = html;
+        }
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchPoem();
+        });
+    </script>
+</body>
+</html>
